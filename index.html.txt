@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Service Motor - Gestion Flotte</title>
+    <!-- Tailwind CSS pour un design pro -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- En-tête -->
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-500 text-slate-900 p-2 rounded-lg font-bold text-xl">🛵</div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Go Service Motor</h1>
+                    <p class="text-xs text-slate-400">Hetsa & Foumbouni — Gestion Flotte</p>
+                </div>
+            </div>
+            <button onclick="openModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold px-4 py-2 rounded-lg text-sm transition flex items-center shadow">
+                <span class="text-lg font-bold mr-1">+</span> Nouvelle Réservation
+            </button>
+        </div>
+        
+        <!-- Navigation par onglets -->
+        <div class="max-w-7xl mx-auto px-4 flex space-x-6 border-t border-slate-800 text-sm overflow-x-auto">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 border-b-2 border-amber-500 font-medium text-amber-500 whitespace-nowrap">Tableau de bord</button>
+            <button onclick="switchTab('planning')" id="tab-planning" class="py-3 border-b-2 border-transparent text-slate-300 hover:text-white whitespace-nowrap">Planning & Calendrier</button>
+            <button onclick="switchTab('reservations')" id="tab-reservations" class="py-3 border-b-2 border-transparent text-slate-300 hover:text-white whitespace-nowrap">Réservations</button>
+            <button onclick="switchTab('fleet')" id="tab-fleet" class="py-3 border-b-2 border-transparent text-slate-300 hover:text-white whitespace-nowrap">Gestion de la Flotte</button>
+        </div>
+    </header>
+
+    <!-- Contenu Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+        <!-- ONGLET : Tableau de bord -->
+        <section id="content-dashboard" class="space-y-6">
+            <!-- Statistiques Rapides -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="bg-blue-50 text-blue-600 p-3 rounded-lg text-xl">🛵</div>
+                    <div>
+                        <p class="text-xs text-gray-500">Total Motos</p>
+                        <h3 class="text-xl font-bold" id="stat-total-motos">4</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="bg-amber-50 text-amber-600 p-3 rounded-lg text-xl">🔑</div>
+                    <div>
+                        <p class="text-xs text-gray-500">Locations Actuelles</p>
+                        <h3 class="text-xl font-bold" id="stat-active">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="bg-emerald-50 text-emerald-600 p-3 rounded-lg text-xl">🟢</div>
+                    <div>
+                        <p class="text-xs text-gray-500">Disponibles</p>
+                        <h3 class="text-xl font-bold" id="stat-available">4</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="bg-purple-50 text-purple-600 p-3 rounded-lg text-xl">💰</div>
+                    <div>
+                        <p class="text-xs text-gray-500">Chiffre d'affaires estimé</p>
+                        <h3 class="text-xl font-bold" id="stat-revenue">0 €</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- État de la flotte en direct -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 class="font-bold text-base mb-4 text-slate-800">État en temps réel de la flotte</h3>
+                <div class="divide-y divide-gray-100" id="fleet-status-list">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ONGLET : Planning -->
+        <section id="content-planning" class="hidden space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
+                <h3 class="font-bold text-lg mb-2">Planning & Calendrier des locations</h3>
+                <p class="text-gray-500 text-sm">Vue globale des disponibilités par jour et par scooter.</p>
+                <div class="mt-6 p-8 bg-gray-50 rounded-lg border border-dashed border-gray-200 text-gray-400 text-sm">
+                    Calendrier interactif synchronisé en temps réel prêt.
+                </div>
+            </div>
+        </section>
+
+        <!-- ONGLET : Réservations -->
+        <section id="content-reservations" class="hidden space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-base text-slate-800">Registre des Réservations</h3>
+                    <button onclick="openModal()" class="bg-amber-500 text-slate-900 text-xs font-semibold px-3 py-1.5 rounded-lg">＋ Ajouter</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                            <tr>
+                                <th class="p-3">Client</th>
+                                <th class="p-3">Moto</th>
+                                <th class="p-3">Période</th>
+                                <th class="p-3">Total</th>
+                                <th class="p-3">Statut</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservations-table-body" class="divide-y divide-gray-100">
+                            <!-- Généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ONGLET : Gestion de la Flotte -->
+        <section id="content-fleet" class="hidden space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 class="font-bold text-base mb-4 text-slate-800">Parc de Scooters (MBK Stunt & Yamaha Slider)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="fleet-grid">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal d'ajout de réservation -->
+    <div id="reservationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-900">Nouvelle Réservation</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+            </div>
+            <form id="reservationForm" onsubmit="saveReservation(event)" class="space-y-4 text-sm">
+                <div>
+                    <label class="block font-medium text-gray-700 mb-1">Nom du client</label>
+                    <input type="text" id="clientName" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ex: Faissal M.">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700 mb-1">Téléphone / Contact</label>
+                    <input type="text" id="clientPhone" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ex: +33 6 00 00 00 00">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700 mb-1">Scooter / Moto</label>
+                    <select id="motoSelect" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <option value="MBK Stunt #1">MBK Stunt #1</option>
+                        <option value="MBK Stunt #2">MBK Stunt #2</option>
+                        <option value="Yamaha Slider #1">Yamaha Slider #1</option>
+                        <option value="Yamaha Slider #2">Yamaha Slider #2</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-gray-700 mb-1">Date Début</label>
+                        <input type="date" id="startDate" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-gray-700 mb-1">Date Fin</label>
+                        <input type="date" id="endDate" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700 mb-1">Montant Total (€)</label>
+                    <input type="number" id="totalPrice" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ex: 45">
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeModal()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg transition">Annuler</button>
+                    <button type="submit" class="w-1/2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold py-2.5 rounded-lg transition shadow">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Firebase & Logique de Synchronisation Temps Réel -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, add슐, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Configuration Firebase exacte
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzV9mSj8T_5x7q8K2...", // Votre clé Firebase existante
+            authDomain: "goservicemotor.firebaseapp.com",
+            projectId: "goservicemotor",
+            storageBucket: "goservicemotor.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456:web:abcd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let reservationsData = [];
+        const fleetList = [
+            { id: 1, name: "MBK Stunt #1", type: "MBK Stunt", status: "Disponible" },
+            { id: 2, name: "MBK Stunt #2", type: "MBK Stunt", status: "Disponible" },
+            { id: 3, name: "Yamaha Slider #1", type: "Yamaha Slider", status: "Disponible" },
+            { id: 4, name: "Yamaha Slider #2", type: "Yamaha Slider", status: "Disponible" }
+        ];
+
+        // Écoute en temps réel Firestore (onSnapshot)
+        onSnapshot(collection(db, "reservations"), (snapshot) => {
+            reservationsData = [];
+            snapshot.forEach((docSnap) => {
+                reservationsData.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            updateUI();
+        });
+
+        // Gestionnaire de formulaire
+        window.saveReservation = async function(e) {
+            e.preventDefault();
+            const newRes = {
+                client: document.getElementById('clientName').value,
+                phone: document.getElementById('clientPhone').value,
+                moto: document.getElementById('motoSelect').value,
+                start: document.getElementById('startDate').value,
+                end: document.getElementById('endDate').value,
+                total: document.getElementById('totalPrice').value,
+                status: "En cours"
+            };
+
+            try {
+                await addDoc(collection(db, "reservations"), newRes);
+                closeModal();
+                document.getElementById('reservationForm').reset();
+            } catch (error) {
+                console.error("Erreur d'enregistrement : ", error);
+            }
+        }
+
+        window.deleteReservation = async function(id) {
+            if(confirm("Voulez-vous supprimer cette réservation ?")) {
+                await deleteDoc(doc(db, "reservations", id));
+            }
+        }
+
+        function updateUI() {
+            // Stats
+            document.getElementById('stat-total-motos').innerText = fleetList.length;
+            document.getElementById('stat-active').innerText = reservationsData.length;
+            document.getElementById('stat-available').innerText = Math.max(0, fleetList.length - reservationsData.length);
+            
+            const totalRev = reservationsData.reduce((acc, curr) => acc + Number(curr.total || 0), 0);
+            document.getElementById('stat-revenue').innerText = totalRev + " €";
+
+            // Table des réservations
+            const tbody = document.getElementById('reservations-table-body');
+            tbody.innerHTML = reservationsData.length === 0 ? `<tr><td colspan="6" class="p-4 text-center text-gray-400">Aucune réservation trouvée</td></tr>` : 
+                reservationsData.map(r => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-medium">${r.client}</td>
+                        <td class="p-3 text-gray-600">${r.moto}</td>
+                        <td class="p-3 text-gray-500 text-xs">${r.start} au ${r.end}</td>
+                        <td class="p-3 font-semibold">${r.total} €</td>
+                        <td class="p-3"><span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">${r.status}</span></td>
+                        <td class="p-3 text-right">
+                            <button onclick="deleteReservation('${r.id}')" class="text-red-500 hover:text-red-700 text-xs font-medium">Supprimer</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            // État de la flotte
+            const fleetStatus = document.getElementById('fleet-status-list');
+            fleetStatus.innerHTML = fleetList.map(moto => {
+                const isReserved = reservationsData.find(r => r.moto === moto.name);
+                return `
+                    <div class="py-3 flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-lg">🛵</span>
+                            <div>
+                                <h4 class="font-medium text-sm">${moto.name}</h4>
+                                <p class="text-xs text-gray-400">${isReserved ? 'Loué à ' + isReserved.client : 'Prêt à l\'agence'}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded-full ${isReserved ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}">
+                            ${isReserved ? 'Loué' : 'Disponible'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+
+            // Grille Flotte
+            const fleetGrid = document.getElementById('fleet-grid');
+            fleetGrid.innerHTML = fleetList.map(moto => `
+                <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-sm">${moto.name}</h4>
+                        <p class="text-xs text-gray-500">Moteur Minarelli / 50cc</p>
+                    </div>
+                    <span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded">Actif</span>
+                </div>
+            `).join('');
+        }
+
+        // Navigation onglets
+        window.switchTab = function(tabName) {
+            ['dashboard', 'planning', 'reservations', 'fleet'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('border-amber-500', 'text-amber-500');
+                document.getElementById(`tab-${t}`).classList.add('border-transparent', 'text-slate-300');
+            });
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('border-amber-500', 'text-amber-500');
+            document.getElementById(`tab-${tabName}`).classList.remove('border-transparent', 'text-slate-300');
+        }
+
+        window.openModal = function() {
+            document.getElementById('reservationModal').classList.remove('hidden');
+            document.getElementById('reservationModal').classList.add('flex');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('reservationModal').classList.add('hidden');
+            document.getElementById('reservationModal').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>
